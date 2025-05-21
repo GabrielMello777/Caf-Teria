@@ -13,7 +13,7 @@ useEffect(() => {
 
   setTimeout(() => {
 router.push('/tabs')
-  }, 2000);
+  });
 
 }, []);
 

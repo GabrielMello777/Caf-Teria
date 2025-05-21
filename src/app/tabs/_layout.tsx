@@ -26,6 +26,7 @@ export default function TabsLayout() {
           ),
           headerShown: false,
         }}
+
       />
 
 
