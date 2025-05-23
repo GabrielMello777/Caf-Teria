@@ -3,11 +3,10 @@ import React, {JSX, useState, useRef} from 'react';
 import {style} from '../style';
 import {Card} from '../../components/cards/index';
 import {Alert} from 'react-native';
-import {Tabs} from 'expo-router';
+import {Link, Tabs} from 'expo-router';
 import { createDrawerNavigator, DrawerContent } from '@react-navigation/drawer';
 import carrinho from './carrinho';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-
 export default function Home() {
 
   const [input, setInput] = useState('');
@@ -18,6 +17,7 @@ const [titulo, setTitulo] = useState("");
 const [mensagem, setmensagem] = useState("");
 const [imagem, setImagem] = useState("");
 const [mostrarCarrinho, setMostrarCarrinho] = useState(false);
+const [Visible2, setVisible2] = useState(false);  
 
 const { width } = Dimensions.get('window');
 const slideAnim = useRef(new Animated.Value(-width * 0.75)).current;
@@ -103,6 +103,28 @@ Alert.alert("Produto adicionado ao carrinho", `Título: ${titulo}\nImagem: ${ima
   };
 
 
+  let a=1;
+function login() {
+
+switch (a) {
+
+  case 1:
+
+  setVisible2(true);
+  a=2;
+  break
+  case 2:
+
+
+    setVisible2(false);
+a=2;
+
+}
+
+
+}
+
+
 return(
 
  
@@ -130,7 +152,8 @@ return(
   name='person'  
   style={{borderWidth: 2, borderRadius: 20, width: 50, height: 50}}
   size={50}
-  />
+  onPress={login}
+    />
       </View>
 
  {mostrarCarrinho && (
@@ -221,6 +244,46 @@ image={{ uri: "https://minhasreceitinhas.com.br/wp-content/uploads/2023/04/unkno
     </View>
   </View>
 </Modal>
+
+<Modal visible={Visible2} transparent={true} animationType="fade">
+
+
+
+<View
+  style={{
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingTop: 50, 
+    paddingLeft: 20, 
+  }}
+>
+  <View
+    style={{
+      backgroundColor: '#D4C6B1',
+      borderRadius: 10,
+      padding: 20,
+      width: '50%',
+      alignItems: 'center',
+    }}
+  >
+     <View style={{ alignSelf: 'flex-end', justifyContent: 'flex-end', alignItems: 'flex-end' }}> 
+     <TouchableOpacity onPress={()=> setVisible2(false)}>
+    <Text style={{ color: 'red', fontSize: 20, fontWeight: 'bold' }}>X</Text>
+     </TouchableOpacity>
+     </View>
+
+     <Link href={"../pags/login"}>Ir para Login</Link>
+
+
+    </View>
+  </View>
+
+
+
+</Modal>
+
 
 
 </ScrollView>
