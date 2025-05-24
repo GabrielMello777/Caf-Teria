@@ -1,5 +1,5 @@
 import {Modal, SafeAreaView, ScrollView, Text, TouchableOpacity, View, Image, Animated, Dimensions} from 'react-native';
-import React, {JSX, useState, useRef} from 'react';
+import React, {JSX, useState, useRef, useEffect} from 'react';
 import {style} from '../style';
 import {Card} from '../../components/cards/index';
 import {Alert} from 'react-native';
@@ -7,6 +7,16 @@ import {Tabs} from 'expo-router';
 import { createDrawerNavigator, DrawerContent } from '@react-navigation/drawer';
 import carrinho from './carrinho';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {Produto} from '../../components/ProdutoCar/index';
+import { Botao } from '../../components/botao';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+type ProdutoSalvo = {
+  titulo: string;
+  imagem: string;
+  mensagem?: string;
+};
+
 
 export default function Home() {
 
@@ -24,9 +34,35 @@ const slideAnim = useRef(new Animated.Value(-width * 0.75)).current;
 
 const drawer= createDrawerNavigator();
 
+const [quantia, setQuantia] = useState([0,]);
+  const [quantiaProdutos, setQuantiaProdutos] = useState(0);
+  const [produto, setProdutos] = useState<ProdutoSalvo[]>([]);
 
+ useEffect(() => {
+    const carregarProdutosSimples = async () => {
+      try {
+        const quantiaString = await AsyncStorage.getItem("quantia");
+        const quantiaProdutosSalva = quantiaString ? parseInt(quantiaString, 10) : 0;
+        setQuantiaProdutos(quantiaProdutosSalva);
 
+        const produtosCarregados: ProdutoSalvo[] = [];
 
+        for (let i = 0; i < quantiaProdutosSalva; i++) {
+          const produtoString = await AsyncStorage.getItem(`produto${i}`);
+          if (produtoString) {
+            produtosCarregados.push(JSON.parse(produtoString));
+          }
+        }
+        setProdutos(produtosCarregados);
+      } catch (e) {
+        console.error("Erro ao carregar produtos:", e);
+      }
+    };
+
+    carregarProdutosSimples();
+  }, []); 
+
+  
 const ProfDrawr = () => {
 
 
@@ -42,35 +78,7 @@ const ProfDrawr = () => {
 }
 
 
-    function teste(numero: number) {
 
-
-switch (numero) {
-
-    case 1:
-
-setVisible(true);
-setTitulo("Café expresso");
-setmensagem("O café expresso é um tipo de café preparado com água quente e pressão, resultando em uma bebida concentrada e rica em sabor.");
-setImagem("https://minhasreceitinhas.com.br/wp-content/uploads/2023/04/unknown_340814842_763583995338120_1516047819594032270_n.jpg");
-        break;
-
-        case 2:
-
-    
-setVisible(true);
-setTitulo("Café da casa ");
-setmensagem("Este Café é o convite perfeito para desacelerar, para saborear cada gole e para sentir o aconchego de algo feito com paixão e dedicação. Seja para despertar o dia com energia e inspiração, ou para aquecer um momento especial e único, este café topzera é a sua dose diária de felicidade em uma xícara. Permita-se essa experiência!");
-setImagem("https://blog.coffeemais.com/wp-content/uploads/2021/07/como-fazer-um-bom-cafe-150x150.jpg");
-
-        break;
-
-        default:
-        Alert.alert("produto não encontrado");
-}
-
-
-    }
 
     function addCarrinho(titulo: string, imagem: string, mensagem: string): void {
         
@@ -101,6 +109,18 @@ Alert.alert("Produto adicionado ao carrinho", `Título: ${titulo}\nImagem: ${ima
       }
     ).start(() => setMostrarCarrinho(false)); 
   };
+interface ProductData {
+    titulo: string;
+    imageUrl: string;
+    func?: () => void; 
+}
+const produtosData: ProductData[] = produto.map((prod, idx) => ({
+  titulo: prod.titulo,
+  imageUrl: prod.imagem,
+  func: () => addCarrinho(prod.titulo, prod.imagem, prod.mensagem ?? ''),
+  id: idx.toString(),
+}));
+
 
 
 return(
@@ -153,6 +173,27 @@ return(
           </TouchableOpacity>
         </Animated.View>
       )}
+
+
+
+
+      <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center", marginTop: 20 }}>
+
+
+
+
+       {produtosData.map((produto) => (
+                    <Produto
+                        key={produto.id} 
+                        titulo={produto.titulo}
+                        image={{ uri: produto.imageUrl }}
+                        func={produto.func}
+                    />
+                ))}
+    
+      </View>
+
+<Botao nome="Enviar pedido" style={{ borderWidth: 1,}}></Botao>
 
 
 <ScrollView> 
