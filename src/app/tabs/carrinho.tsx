@@ -3,7 +3,7 @@ import React, {JSX, useState, useRef, useEffect} from 'react';
 import {style} from '../style';
 import {Card} from '../../components/cards/index';
 import {Alert} from 'react-native';
-import {Tabs} from 'expo-router';
+import {Link, Tabs} from 'expo-router';
 import { createDrawerNavigator, DrawerContent } from '@react-navigation/drawer';
 import carrinho from './carrinho';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -12,6 +12,7 @@ import { Botao } from '../../components/botao';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProdutoSalvo = {
+  preco: number | undefined;
   titulo: string;
   imagem: string;
   mensagem?: string;
@@ -37,31 +38,39 @@ const drawer= createDrawerNavigator();
 const [quantia, setQuantia] = useState([0,]);
   const [quantiaProdutos, setQuantiaProdutos] = useState(0);
   const [produto, setProdutos] = useState<ProdutoSalvo[]>([]);
+const produtoVar= [];
+useEffect(() => {
+  const carregarProdutosSimples = async () => {
+    try {
+      const quantiaString = await AsyncStorage.getItem("quantia");
+      const quantiaProdutosSalva = quantiaString ? parseInt(quantiaString, 10) : 0;
+      setQuantiaProdutos(quantiaProdutosSalva);
 
- useEffect(() => {
-    const carregarProdutosSimples = async () => {
-      try {
-        const quantiaString = await AsyncStorage.getItem("quantia");
-        const quantiaProdutosSalva = quantiaString ? parseInt(quantiaString, 10) : 0;
-        setQuantiaProdutos(quantiaProdutosSalva);
+      const produtosCarregados: ProdutoSalvo[] = [];
 
-        const produtosCarregados: ProdutoSalvo[] = [];
-
-        for (let i = 0; i < quantiaProdutosSalva; i++) {
-          const produtoString = await AsyncStorage.getItem(`produto${i}`);
-          if (produtoString) {
-            produtosCarregados.push(JSON.parse(produtoString));
-          }
+      for (let i = 0; i < quantiaProdutosSalva; i++) {
+        const produtoString = await AsyncStorage.getItem(`produto${i}`);
+        if (produtoString) {
+          produtosCarregados.push(JSON.parse(produtoString));
         }
-        setProdutos(produtosCarregados);
-      } catch (e) {
-        console.error("Erro ao carregar produtos:", e);
       }
-    };
+      setProdutos(produtosCarregados);
+    } catch (e) {
+      console.error("Erro ao carregar produtos:", e);
+    }
+  };
 
+  carregarProdutosSimples();
+
+  const intervalId = setInterval(() => {
     carregarProdutosSimples();
-  }, []); 
+  }, 2000);
 
+  return () => clearInterval(intervalId);
+}, []);
+
+
+    const [Visible2, setVisible2] = useState(false);  
   
 const ProfDrawr = () => {
 
@@ -77,8 +86,18 @@ const ProfDrawr = () => {
 
 }
 
-
-
+  let a=1;
+  function login() {
+    switch (a) {
+      case 1:
+        setVisible2(true);
+        a=2;
+        break
+      case 2:
+        setVisible2(false);
+        a=2;
+    }
+  }
 
     function addCarrinho(titulo: string, imagem: string, mensagem: string): void {
         
@@ -109,17 +128,33 @@ Alert.alert("Produto adicionado ao carrinho", `Título: ${titulo}\nImagem: ${ima
       }
     ).start(() => setMostrarCarrinho(false)); 
   };
-interface ProductData {
-    titulo: string;
-    imageUrl: string;
-    func?: () => void; 
+
+
+  
+const quantidade: number[]= [];
+
+async function clearAllProducts() {
+  try {
+    const quantiaString = await AsyncStorage.getItem("quantia");
+    const currentQuantia = quantiaString ? parseInt(quantiaString, 10) : 0;
+
+    for (let i = 0; i < currentQuantia; i++) {
+      await AsyncStorage.removeItem(`produto${i}`);
+    }
+
+    await AsyncStorage.removeItem("quantia");
+
+    setQuantiaProdutos(0);     
+    setProdutos([]);          
+    setQuantia([]);        
+
+    Alert.alert("Carrinho Limpo", "Todos os produtos foram removidos do carrinho.");
+  } catch (e) {
+    console.error("Erro ao limpar o carrinho:", e);
+    Alert.alert("Erro", "Não foi possível limpar o carrinho.");
+  }
 }
-const produtosData: ProductData[] = produto.map((prod, idx) => ({
-  titulo: prod.titulo,
-  imageUrl: prod.imagem,
-  func: () => addCarrinho(prod.titulo, prod.imagem, prod.mensagem ?? ''),
-  id: idx.toString(),
-}));
+
 
 
 
@@ -146,12 +181,13 @@ return(
 
 <Image source={require("../../../assets/icon.png")} style={style.img}></Image>
 
-<Icon
-  name='person'  
-  style={{borderWidth: 2, borderRadius: 20, width: 50, height: 50, justifyContent: "center", alignItems: "center"}}
-  size={50}
-  onPress={() => Alert.alert("oi")}
-  />
+
+        <Icon
+          name='person'  
+          style={{borderWidth: 2, borderRadius: 20, width: 50, height: 50}}
+          size={50}
+          onPress={login}
+        />
       </View>
 
  {mostrarCarrinho && (
@@ -177,32 +213,82 @@ return(
 
 
 
-      <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center", marginTop: 20 }}>
+<ScrollView 
+  contentContainerStyle={{
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  }}
+>
 
+  {produto.map((item, index) => (
+    <><Produto
+      key={index}
+      image={item?.imagem ? { uri: item.imagem } : undefined}
+      titulo={item?.titulo}
+      preco={item?.preco}
+      quantia={quantia[index] || 0}
+      funcMais={() => {
+        const novaQuantia = [...quantia];
+        novaQuantia[index] = (novaQuantia[index] || 0) + 1;
+        setQuantia(novaQuantia);
+      } }
+      funcMenos={() => {
+        const novaQuantia = [...quantia];
+        novaQuantia[index] = (novaQuantia[index] || 0) - 1;
+        setQuantia(novaQuantia);
+      } } /><Text>{""}</Text></>
 
+  ))}
+       
 
-
-       {produtosData.map((produto) => (
-                    <Produto
-                        key={produto.id} 
-                        titulo={produto.titulo}
-                        image={{ uri: produto.imageUrl }}
-                        func={produto.func}
-                    />
-                ))}
-    
-      </View>
-
+<View style={{  flexDirection: "column",
+  flexWrap: "wrap",
+  justifyContent: "space-around",
+  paddingVertical: 20,
+  gap: 20,}}>
 <Botao nome="Enviar pedido" style={{ borderWidth: 1,}}></Botao>
 
 
-<ScrollView> 
 
-
+          <Botao nome="Limpar Carrinho" onPress={clearAllProducts}></Botao>
+ </View>
 
 
 
 </ScrollView>
+
+
+ <Modal visible={Visible2} transparent={true} animationType="fade">
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'flex-start',
+              alignItems: 'flex-end',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              paddingTop: 50, 
+              paddingLeft: 20, 
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: '#D4C6B1',
+                borderRadius: 10,
+                padding: 20,
+                width: '50%',
+                alignItems: 'center',
+              }}
+            >
+              <View style={{ alignSelf: 'flex-end', justifyContent: 'flex-end', alignItems: 'flex-end' }}> 
+                <TouchableOpacity onPress={()=> setVisible2(false)}>
+                  <Text style={{ color: 'red', fontSize: 20, fontWeight: 'bold' }}>X</Text>
+                </TouchableOpacity>
+              </View>
+              <Link href={"../pags/login"}>Ir para Login</Link>
+            </View>
+          </View>
+        </Modal>
 
 </SafeAreaView>
 )

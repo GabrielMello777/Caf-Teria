@@ -40,7 +40,7 @@ export function Produto(props: ImageProps & TouchableOpacityProps & {
                 <Text style={style.priceValue}>R${preco != null ? preco.toFixed(2) : '0.00'}</Text>
                 <View style={style.quantityControl}>
                     <Botao nome={"-"} onPress={funcMenos} style={style.buttonMinus} />
-                    <Text style={style.quantityText}>{quantia != null ? quantia : 0}</Text>
+                    <Text style={style.quantityText}>{quantia != null ? quantia : 1}</Text>
                     <Botao nome={"+"} onPress={funcMais} style={style.buttonPlus} />
                 </View>
             </View>
